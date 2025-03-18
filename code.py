@@ -1,3 +1,15 @@
+import streamlit as st
+import requests
+from bs4 import BeautifulSoup
+from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.vectorstores import Chroma
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.chains import ConversationalRetrievalChain
+from langchain.memory import ConversationBufferMemory
+from langchain.llms import HuggingFacePipeline
+from langchain.document_loaders import WebBaseLoader
+from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, pipeline
+import os
 st.title("Web Content Conversational Q&A Tool (Free Version)")
 st.write("Enter URLs, scrape content, and ask questions based on the content.")
 
