@@ -68,10 +68,10 @@ def create_embeddings(documents):
 # Create question-answering chain
 def create_question_answering_chain(llm):
     system_prompt = (
-        ""You are a precise question-answering assistant. "
-    "Answer the user's question using only the context provided from the scraped URL content and the chat history. "
-    "Do not use external knowledge beyond what is retrieved. "
-    "Keep your answer concise, limited to three sentences maximum, and say 'I don’t know' if the context lacks the answer.\n\n{context}"
+        "You are a precise question-answering assistant. "
+        "Answer the user's question using only the context provided from the scraped URL content and the chat history. "
+        "Do not use external knowledge beyond what is retrieved. "
+        "Keep your answer concise, limited to three sentences maximum, and say 'I don’t know' if the context lacks the answer.\n\n{context}"
     )
     qa_prompt = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
