@@ -1,4 +1,6 @@
 import streamlit as st
+st.set_page_config(page_title="RAG Chat Assistant", layout="wide")
+st.title("RAG Chat Assistant")
 from langchain_anthropic import ChatAnthropic
 from langchain_groq import ChatGroq
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
@@ -13,9 +15,8 @@ from langchain_community.vectorstores import FAISS  # Using FAISS instead of Chr
 import os
 
 # Set page config at the very beginning
-st.set_page_config(page_title="RAG Chat Assistant", layout="wide")
-st.title("RAG Chat Assistant")
 
+groq_api_key = "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"
 # Define session state
 if "retriever" not in st.session_state:
     st.session_state.retriever = None
