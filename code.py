@@ -54,9 +54,18 @@ with st.sidebar:
     max_tokens = st.slider("Max Tokens", min_value=256, max_value=4096, value=1024, step=256)
 
 # URL input
+if "url_input" not in st.session_state:
+    st.session_state.url_input = ""
 url_col1, url_col2 = st.columns([3, 1])
 with url_col1:
-    url = st.text_input("Enter a URL to load content from:", key=f"url_input_{str(uuid.uuid4())[:8]}")  # Generate a unique key with UUID
+    url = st.text_input(
+        "Enter a URL to load content from:", 
+        key="url_input_field",
+        value=st.session_state.url_input
+    )
+    # Update session state when URL changes
+    st.session_state.url_input = url
+    
 with url_col2:
     load_button = st.button("Load Content")
 
