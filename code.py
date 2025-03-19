@@ -3,13 +3,13 @@ from langchain_anthropic import ChatAnthropic
 from langchain_groq import ChatGroq
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain_chroma import Chroma
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.messages import HumanMessage, AIMessage
+from langchain_community.vectorstores import FAISS  # Using FAISS instead of Chroma
 import os
 
 # Set page config at the very beginning
@@ -78,7 +78,7 @@ def load_content(url):
             return None
 
 def create_embeddings(documents):
-    """Create embeddings for the documents using HuggingFaceEmbeddings."""
+    """Create embeddings for the documents using HuggingFaceEmbeddings and FAISS."""
     with st.spinner("Creating embeddings and vector store..."):
         try:
             # Set environment variable to prevent parallelism issues
@@ -90,7 +90,9 @@ def create_embeddings(documents):
             )
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=5000, chunk_overlap=500)
             splits = text_splitter.split_documents(documents)
-            vectorstore = Chroma.from_documents(documents=splits, embedding=embeddings)
+            
+            # Use FAISS instead of Chroma
+            vectorstore = FAISS.from_documents(documents=splits, embedding=embeddings)
             st.success("Vector store created successfully")
             return vectorstore.as_retriever()
         except Exception as e:
