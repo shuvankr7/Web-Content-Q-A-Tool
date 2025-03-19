@@ -1,5 +1,4 @@
 import streamlit as st
-from langchain_anthropic import ChatAnthropic
 from langchain_groq import ChatGroq
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
@@ -13,14 +12,9 @@ from langchain_community.vectorstores import FAISS
 import os
 
 # Set page config at the very beginning
-# st.set_page_config(page_title="RAG Chat Assistant", layout="wide")
-# st.title("RAG Chat Assistant")
 os.environ["USER_AGENT"] = "RAG-Chat-Assistant/1.0"
-USER_AGENT="RAG-Chat-Assistant/1.0"
-KMP_DUPLICATE_LIB_OK=True
-
-
-
+USER_AGENT = "RAG-Chat-Assistant/1.0"
+KMP_DUPLICATE_LIB_OK = True
 
 # Define session state
 if "retriever" not in st.session_state:
@@ -37,27 +31,22 @@ if "loaded_url" not in st.session_state:
 # Default Groq API key
 DEFAULT_GROQ_API_KEY = "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"
 
-# Sidebar for API keys and model selection
+# Sidebar Configuration
 with st.sidebar:
     st.header("Configuration")
-    
-    # Model selection
-    model_choice = st.radio(
-    "Select LLM Provider",
-    ["Groq"],
-    key="llm_provider_selection"  # Adding a unique key to prevent conflicts
-)
 
-    groq_api_key = st.text_input("Groq API Key", 
-                                     value=DEFAULT_GROQ_API_KEY, 
-                                     type="password",
-                                     help="You can use the provided API key or enter your own")
-        
+    groq_api_key = st.text_input(
+        "Groq API Key", 
+        value=DEFAULT_GROQ_API_KEY, 
+        type="password",
+        help="You can use the provided API key or enter your own"
+    )
+
     groq_model = st.selectbox(
-            "Groq Model",
-            ["llama3-70b-8192"]
-        )
-    
+        "Groq Model",
+        ["llama3-70b-8192"]
+    )
+
     temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
     max_tokens = st.slider("Max Tokens", min_value=256, max_value=4096, value=1024, step=256)
 
@@ -85,7 +74,6 @@ def create_embeddings(documents):
     """Create embeddings for the documents using HuggingFaceEmbeddings and FAISS."""
     with st.spinner("Creating embeddings and vector store..."):
         try:
-            # Set environment variable to prevent parallelism issues
             os.environ["TOKENIZERS_PARALLELISM"] = "false"
             
             embeddings = HuggingFaceEmbeddings(
@@ -95,7 +83,6 @@ def create_embeddings(documents):
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=5000, chunk_overlap=500)
             splits = text_splitter.split_documents(documents)
             
-            # Create FAISS vector store instead of Chroma
             vectorstore = FAISS.from_documents(documents=splits, embedding=embeddings)
             st.success("Vector store created successfully")
             return vectorstore.as_retriever()
@@ -110,57 +97,47 @@ def create_question_answering_chain(llm):
         "Use the following pieces of retrieved context to answer "
         "the question. If you don't know the answer, say that you "
         "don't know. Use three sentences maximum and keep the "
-        "answer concise."
-        "\n\n"
-        "{context}"  
+        "answer concise.\n\n{context}"  
     )
-    qa_prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", system_prompt),  
-            MessagesPlaceholder(variable_name="chat_history"),
-            ("human", "{input}"),  
-        ]
-    )
+    qa_prompt = ChatPromptTemplate.from_messages([
+        ("system", system_prompt),
+        MessagesPlaceholder(variable_name="chat_history"),
+        ("human", "{input}"),
+    ])
     return create_stuff_documents_chain(llm, qa_prompt)
 
 def initialize_rag_system():
-    # Create LLM based on user choice
-
+    """Initialize the RAG system with Groq LLM."""
     llm = ChatGroq(
-            api_key=groq_api_key,
-            model=groq_model,
-            temperature=temperature,
-            max_tokens=max_tokens
-        )
+        api_key=groq_api_key,
+        model=groq_model,
+        temperature=temperature,
+        max_tokens=max_tokens
+    )
     st.sidebar.success(f"Using Groq LLM: {groq_model}")
 
     contextualize_q_system_prompt = (
-    """You are tasked with answering a question based on three sources of context:
-
-    1. **Website Content:** The text extracted from the user's provided URLs.
-    2. **Chat History:** The conversation history between the user and the assistant.
-    3. **User Question:** The current question being asked by the user.
-
-    Please answer the following question based only on the above context, and provide a concise, relevant, and clear response.
-
-    Question: {input}"""
+        """You are tasked with answering a question based on three sources of context:
+        1. **Website Content:** The text extracted from the user's provided URLs.
+        2. **Chat History:** The conversation history between the user and the assistant.
+        3. **User Question:** The current question being asked by the user.
+        Please answer the following question based only on the above context, and provide a concise, relevant, and clear response.
+        Question: {input}"""
     )
-    
+
     contextualize_q_prompt = ChatPromptTemplate.from_messages([
         ("system", contextualize_q_system_prompt),
         MessagesPlaceholder(variable_name="chat_history"),
         ("human", "{input}")
     ])
 
-    # Create history-aware retriever and question-answering chain
     history_aware_retriever = create_history_aware_retriever(llm, st.session_state.retriever, contextualize_q_prompt) 
     question_answer_chain = create_question_answering_chain(llm)
-
-    # Create RAG chain
     rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
+    
     return rag_chain
 
-# Logic for loading URL
+# Load content when button is clicked
 if load_button and url:
     if not url.startswith(('http://', 'https://')):
         url = 'https://' + url
@@ -171,8 +148,6 @@ if load_button and url:
         st.session_state.retriever = create_embeddings(documents)
         
         if st.session_state.retriever:
-            # Check if API key is provided when using Anthropic
-            
             st.session_state.rag_chain = initialize_rag_system()
             if st.session_state.rag_chain:
                 st.success("RAG system initialized and ready to use!")
@@ -191,55 +166,34 @@ for message in st.session_state.messages:
 
 # Handle user input
 if user_input := st.chat_input("Ask a question about the loaded content..."):
-    # Don't allow input until URL is loaded
     if not st.session_state.loaded_url:
         st.error("Please load a URL first.")
-    # Check if API key is provided when using Anthropic
-    
     else:
-        # Add user message to chat history
         st.session_state.messages.append({"role": "user", "content": user_input})
         with st.chat_message("user"):
             st.write(user_input)
         
-        # Add user message to chat history for RAG
         user_message = HumanMessage(content=user_input)
         st.session_state.chat_history.add_message(user_message)
         
-        # Get response from RAG system
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 try:
-                    # Retrieve context-aware response
                     result = st.session_state.rag_chain.invoke({
                         "input": user_input, 
                         "chat_history": st.session_state.chat_history.messages
                     })
+                    response = result.get('answer') or result.get('output') or next(iter(result.values()), "I don't know.")
                     
-                    # Extract answer from result
-                    if 'answer' in result:
-                        response = result['answer']
-                    elif 'output' in result:
-                        response = result['output']
-                    else:
-                        # If neither key exists, get the first value as a fallback
-                        response = next(iter(result.values()))
-                    
-                    # Display the response
                     st.write(response)
                     
-                    # Add bot response to chat history for RAG
                     bot_message = AIMessage(content=response)
                     st.session_state.chat_history.add_message(bot_message)
-                    
-                    # Add bot response to chat history for display
                     st.session_state.messages.append({"role": "assistant", "content": response})
                 except Exception as e:
                     st.error(f"Error: {e}")
-                    if 'result' in locals():
-                        st.write("Debug - Result:", result)
 
-# Add clear chat button
+# Clear chat button
 if st.button("Clear Chat"):
     st.session_state.messages = []
     st.session_state.chat_history = ChatMessageHistory()
