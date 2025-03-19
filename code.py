@@ -40,22 +40,22 @@ with st.sidebar:
         value=DEFAULT_GROQ_API_KEY, 
         type="password",
         help="You can use the provided API key or enter your own",
-        key="groq_api_key_input"
+        key="groq_api_key"
     )
 
     groq_model = st.selectbox(
         "Groq Model",
         ["llama3-70b-8192"],
-        key="groq_model_select"
+        key="groq_model"
     )
 
-    temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1, key="temperature_slider")
-    max_tokens = st.slider("Max Tokens", min_value=256, max_value=4096, value=1024, step=256, key="max_tokens_slider")
+    temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1, key="temperature")
+    max_tokens = st.slider("Max Tokens", min_value=256, max_value=4096, value=1024, step=256, key="max_tokens")
 
 # URL input
 url_col1, url_col2 = st.columns([3, 1])
 with url_col1:
-    url = st.text_input("Enter a URL to load content from:", key="url_input")
+    url = st.text_input("Enter a URL to load content from:", key="url")
 with url_col2:
     load_button = st.button("Load Content", key="load_button")
 
@@ -188,6 +188,6 @@ if user_input := st.chat_input("Ask a question about the loaded content...", key
                     st.error(f"Error: {e}")
 
 # Clear chat button
-if st.button("Clear Chat", key="clear_chat_button"):
+if st.button("Clear Chat", key="clear_chat"):
     st.session_state.messages = []
     st.success("Chat history cleared!")
