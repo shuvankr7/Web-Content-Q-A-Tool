@@ -33,34 +33,49 @@ DEFAULT_GROQ_API_KEY = "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
 
 # Sidebar Configuration
 with st.sidebar:
-    st.header("Configuration")
+    st.header("Configuration", key="sidebar_header")
 
     groq_api_key = st.text_input(
-    "Groq API Key", 
-    value=DEFAULT_GROQ_API_KEY, 
-    type="password",
-    help="You can use the provided API key or enter your own",
-    key="groq_api_key_input"  # Add unique key
-)
+        "Groq API Key", 
+        value=DEFAULT_GROQ_API_KEY, 
+        type="password",
+        help="You can use the provided API key or enter your own",
+        key="groq_api_key_input"
+    )
     groq_model = st.selectbox(
         "Groq Model",
-        ["llama3-70b-8192"]
+        ["llama3-70b-8192"],
+        key="groq_model_select"
     )
 
-    temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
-    max_tokens = st.slider("Max Tokens", min_value=256, max_value=4096, value=1024, step=256)
+    temperature = st.slider(
+        "Temperature", 
+        min_value=0.0, 
+        max_value=1.0, 
+        value=0.5, 
+        step=0.1,
+        key="temperature_slider"
+    )
+    max_tokens = st.slider(
+        "Max Tokens", 
+        min_value=256, 
+        max_value=4096, 
+        value=1024, 
+        step=256,
+        key="max_tokens_slider"
+    )
 
 # URL input
 url_col1, url_col2 = st.columns([3, 1])
 with url_col1:
     url = st.text_input(
         "Enter a URL to load content from:",
-        key="url_input"  # Add unique key
+        key="url_input"
     )
 with url_col2:
-    load_button = st.button("Load Content")
+    load_button = st.button("Load Content", key="load_content_button")
 
-# Functions
+# Functions remain the same...
 def load_content(url):
     """Load content from a URL using WebBaseLoader."""
     with st.spinner(f"Loading content from {url}..."):
@@ -160,7 +175,7 @@ if st.session_state.loaded_url:
     st.info(f"Currently using content from: {st.session_state.loaded_url}")
 
 # Chat interface
-st.header("Chat")
+st.header("Chat", key="chat_header")
 
 # Display chat messages
 for message in st.session_state.messages:
@@ -168,7 +183,7 @@ for message in st.session_state.messages:
         st.write(message["content"])
 
 # Handle user input
-if user_input := st.chat_input("Ask a question about the loaded content..."):
+if user_input := st.chat_input("Ask a question about the loaded content...", key="chat_input"):
     if not st.session_state.loaded_url:
         st.error("Please load a URL first.")
     else:
@@ -197,7 +212,7 @@ if user_input := st.chat_input("Ask a question about the loaded content..."):
                     st.error(f"Error: {e}")
 
 # Clear chat button
-if st.button("Clear Chat"):
+if st.button("Clear Chat", key="clear_chat_button"):
     st.session_state.messages = []
     st.session_state.chat_history = ChatMessageHistory()
     st.success("Chat history cleared!")
