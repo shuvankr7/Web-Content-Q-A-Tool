@@ -43,9 +43,10 @@ with st.sidebar:
     
     # Model selection
     model_choice = st.radio(
-        "Select LLM Provider",
-        [ "Groq"]
-    )
+    "Select LLM Provider",
+    ["Groq"],
+    key="llm_provider_selection"  # Adding a unique key to prevent conflicts
+)
 
     groq_api_key = st.text_input("Groq API Key", 
                                      value=DEFAULT_GROQ_API_KEY, 
