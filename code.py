@@ -10,6 +10,7 @@ from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_community.vectorstores import FAISS
 import os
+import uuid
 
 # Set page config at the very beginning
 os.environ["USER_AGENT"] = "RAG-Chat-Assistant/1.0"
@@ -40,7 +41,7 @@ with st.sidebar:
     value=DEFAULT_GROQ_API_KEY, 
     type="password",
     help="You can use the provided API key or enter your own",
-    key="sidebar_groq_api_key_input"  # More specific unique key
+    key=f"groq_api_key_{str(uuid.uuid4())[:8]}"  # Generate a unique key with UUID
 )
 
 
@@ -55,7 +56,7 @@ with st.sidebar:
 # URL input
 url_col1, url_col2 = st.columns([3, 1])
 with url_col1:
-    url = st.text_input("Enter a URL to load content from:", key="main_url_input") 
+    url = st.text_input("Enter a URL to load content from:", key=f"url_input_{str(uuid.uuid4())[:8]}")  # Generate a unique key with UUID
 with url_col2:
     load_button = st.button("Load Content")
 
