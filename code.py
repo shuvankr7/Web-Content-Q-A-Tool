@@ -1,4 +1,6 @@
-streamlit.set_page_config(page_title="RAG Chat Assistant", layout="wide")
+import streamlit as st
+
+st.set_page_config(page_title="RAG Chat Assistant", layout="wide")
 
 import os
 import streamlit as st
