@@ -46,12 +46,28 @@ with st.sidebar:
 
 
     groq_model = st.selectbox(
-        "Groq Model",
-        ["llama3-70b-8192"]
-    )
+    "Groq Model",
+    ["llama3-70b-8192"],
+    key="groq_model_selector"  # Add this unique key
+)
 
-    temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
-    max_tokens = st.slider("Max Tokens", min_value=256, max_value=4096, value=1024, step=256)
+    temperature = st.slider(
+    "Temperature", 
+    min_value=0.0, 
+    max_value=1.0, 
+    value=0.5, 
+    step=0.1,
+    key="temperature_slider"
+)
+
+max_tokens = st.slider(
+    "Max Tokens", 
+    min_value=256, 
+    max_value=4096, 
+    value=1024, 
+    step=256,
+    key="max_tokens_slider"
+)
 
 # URL input
 if "url_input" not in st.session_state:
@@ -67,7 +83,9 @@ with url_col1:
     st.session_state.url_input = url
     
 with url_col2:
-    load_button = st.button("Load Content")
+    load_button = st.button("Load Content", key="load_content_button")
+    
+
 
 # Functions
 def load_content(url):
