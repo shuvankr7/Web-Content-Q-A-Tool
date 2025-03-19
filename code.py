@@ -10,8 +10,6 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_community.vectorstores import FAISS
-import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
 
 # Set environment variables before imports
 os.environ["USER_AGENT"] = "RAG-Chat-Assistant/1.0"
@@ -20,9 +18,6 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # Default Groq API key
 DEFAULT_GROQ_API_KEY = "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"
-
-# Initialize embeddings globally for reuse
-embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2", model_kwargs={"device": "cpu"}, show_progress=False)
 
 # Initialize session state
 def initialize_session_state():
@@ -53,10 +48,12 @@ def load_content(url):
 def create_embeddings(documents):
     with st.spinner("Creating embeddings and vector store..."):
         try:
+            # Explicitly import torch to ensure it’s fully loaded
             import torch
+            # Use a lightweight model and CPU-only to avoid GPU-related issues
             embeddings = HuggingFaceEmbeddings(
                 model_name="all-MiniLM-L6-v2",
-                model_kwargs={"device": "cpu"},
+                model_kwargs={"device": "cpu"},  # Force CPU usage
                 show_progress=False
             )
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=5000, chunk_overlap=500)
@@ -120,8 +117,10 @@ def main():
     st.set_page_config(page_title="RAG Chat Assistant", layout="wide")
     initialize_session_state()
 
+    # Display Streamlit version for debugging
     st.write(f"Streamlit version: {st.__version__}")
 
+    # Sidebar configuration
     with st.sidebar:
         st.sidebar.header("Configuration")
         groq_api_key = st.text_input(
@@ -153,6 +152,7 @@ def main():
             key="max_tokens_slider_unique"
         )
 
+    # URL input section
     st.header("Load Content")
     url_col1, url_col2 = st.columns([3, 1])
     with url_col1:
@@ -160,9 +160,10 @@ def main():
     with url_col2:
         load_button = st.button("Load Content", key="load_content_button_unique")
 
+    # Handle URL loading
     if load_button and url:
-        if not url.startswith(("http://", "https://")):
-            url = "https://" + url
+        if not url.startswith(('http://', 'https://')):
+            url = 'https://' + url
         documents = load_content(url)
         if documents:
             st.session_state.loaded_url = url
@@ -172,14 +173,17 @@ def main():
                 if st.session_state.rag_chain:
                     st.success("RAG system initialized and ready to use!")
 
+    # Display loaded URL status
     if st.session_state.loaded_url:
         st.info(f"Currently using content from: {st.session_state.loaded_url}")
 
+    # Chat interface
     st.header("Chat")
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.write(message["content"])
 
+    # Handle chat input
     if user_input := st.chat_input("Ask a question about the loaded content...", key="chat_input_unique"):
         if not st.session_state.loaded_url:
             st.error("Please load a URL first.")
@@ -197,24 +201,15 @@ def main():
                             "input": user_input,
                             "chat_history": st.session_state.chat_history.messages
                         })
-                        response = result.get("answer") or result.get("output") or next(iter(result.values()), "I don't know.")
-                        
-                        question_embedding = embeddings.embed_query(user_input)
-                        answer_embedding = embeddings.embed_query(response)
-                        relevance_score = cosine_similarity(
-                            np.array(question_embedding).reshape(1, -1),
-                            np.array(answer_embedding).reshape(1, -1)
-                        )[0][0]
-                        relevance_percent = round(relevance_score * 100, 2)
-
+                        response = result.get('answer') or result.get('output') or next(iter(result.values()), "I don't know.")
                         st.write(response)
-                        st.write(f"**Relevance Score:** {relevance_percent}%")
                         bot_message = AIMessage(content=response)
                         st.session_state.chat_history.add_message(bot_message)
                         st.session_state.messages.append({"role": "assistant", "content": response})
                     except Exception as e:
                         st.error(f"Error processing question: {str(e)}")
 
+    # Clear chat button
     if st.button("Clear Chat", key="clear_chat_button_unique"):
         st.session_state.messages = []
         st.session_state.chat_history = ChatMessageHistory()
