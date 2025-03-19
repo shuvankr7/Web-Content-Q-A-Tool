@@ -1,12 +1,26 @@
-streamlit>=1.26.0
-langchain>=0.0.267
-langchain_anthropic>=0.0.6
-langchain_groq>=0.0.3
-langchain_chroma>=0.0.13
-langchain_huggingface>=0.0.2
-langchain_text_splitters>=0.0.1
-langchain_community>=0.0.10
-langchain_core>=0.1.0
-chromadb>=0.4.18
+# Core dependencies
+streamlit>=1.32.0
+langchain>=0.1.0
+langchain-anthropic>=0.1.1
+langchain-groq>=0.1.0
+langchain-community>=0.0.16
+langchain-core>=0.1.15
+langchain-huggingface>=0.0.2
+langchain-text-splitters>=0.0.1
+langchain-chroma>=0.0.10
+
+# For web scraping
+beautifulsoup4>=4.12.2
+requests>=2.31.0
+
+# For embeddings
 sentence-transformers>=2.2.2
-bs4
+chromadb>=0.4.22
+faiss-cpu>=1.7.4
+
+# For handling environment variables
+python-dotenv>=1.0.0
+
+# Optional dependencies for better performance
+pydantic>=2.0.0
+tiktoken>=0.5.1
