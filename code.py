@@ -39,25 +39,23 @@ with st.sidebar:
         "Groq API Key", 
         value=DEFAULT_GROQ_API_KEY, 
         type="password",
-        help="You can use the provided API key or enter your own",
-        key="groq_api_key"
+        help="You can use the provided API key or enter your own"
     )
 
     groq_model = st.selectbox(
         "Groq Model",
-        ["llama3-70b-8192"],
-        key="groq_model"
+        ["llama3-70b-8192"]
     )
 
-    temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1, key="temperature")
-    max_tokens = st.slider("Max Tokens", min_value=256, max_value=4096, value=1024, step=256, key="max_tokens")
+    temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
+    max_tokens = st.slider("Max Tokens", min_value=256, max_value=4096, value=1024, step=256)
 
 # URL input
 url_col1, url_col2 = st.columns([3, 1])
 with url_col1:
-    url = st.text_input("Enter a URL to load content from:", key="url")
+    url = st.text_input("Enter a URL to load content from:")
 with url_col2:
-    load_button = st.button("Load Content", key="load_button")
+    load_button = st.button("Load Content")
 
 # Functions
 def load_content(url):
@@ -167,7 +165,7 @@ for message in st.session_state.messages:
         st.write(message["content"])
 
 # Handle user input
-if user_input := st.chat_input("Ask a question about the loaded content...", key="chat_input"):
+if user_input := st.chat_input("Ask a question about the loaded content..."):
     if not st.session_state.loaded_url:
         st.error("Please load a URL first.")
     else:
@@ -175,19 +173,28 @@ if user_input := st.chat_input("Ask a question about the loaded content...", key
         with st.chat_message("user"):
             st.write(user_input)
         
+        user_message = HumanMessage(content=user_input)
+        st.session_state.chat_history.add_message(user_message)
+        
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 try:
-                    result = st.session_state.rag_chain.invoke({"input": user_input, "chat_history": st.session_state.chat_history.messages})
+                    result = st.session_state.rag_chain.invoke({
+                        "input": user_input, 
+                        "chat_history": st.session_state.chat_history.messages
+                    })
                     response = result.get('answer') or result.get('output') or next(iter(result.values()), "I don't know.")
                     
                     st.write(response)
                     
+                    bot_message = AIMessage(content=response)
+                    st.session_state.chat_history.add_message(bot_message)
                     st.session_state.messages.append({"role": "assistant", "content": response})
                 except Exception as e:
                     st.error(f"Error: {e}")
 
 # Clear chat button
-if st.button("Clear Chat", key="clear_chat"):
+if st.button("Clear Chat"):
     st.session_state.messages = []
+    st.session_state.chat_history = ChatMessageHistory()
     st.success("Chat history cleared!")
