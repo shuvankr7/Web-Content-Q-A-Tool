@@ -48,7 +48,14 @@ def load_content(url):
 def create_embeddings(documents):
     with st.spinner("Creating embeddings and vector store..."):
         try:
-            embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2", show_progress=False)
+            # Explicitly import torch to ensure it’s fully loaded
+            import torch
+            # Use a lightweight model and CPU-only to avoid GPU-related issues
+            embeddings = HuggingFaceEmbeddings(
+                model_name="all-MiniLM-L6-v2",
+                model_kwargs={"device": "cpu"},  # Force CPU usage
+                show_progress=False
+            )
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=5000, chunk_overlap=500)
             splits = text_splitter.split_documents(documents)
             vectorstore = FAISS.from_documents(documents=splits, embedding=embeddings)
@@ -117,7 +124,7 @@ def main():
 
     # Sidebar configuration
     with st.sidebar:
-        st.sidebar.header("Configuration")  # No key
+        st.sidebar.header("Configuration")
         groq_api_key = st.text_input(
             "Groq API Key",
             value=DEFAULT_GROQ_API_KEY,
@@ -148,7 +155,7 @@ def main():
         )
 
     # URL input section
-    st.header("Load Content")  # No key
+    st.header("Load Content")
     url_col1, url_col2 = st.columns([3, 1])
     with url_col1:
         url = st.text_input("Enter a URL to load content from:", key="url_input_unique")
@@ -173,7 +180,7 @@ def main():
         st.info(f"Currently using content from: {st.session_state.loaded_url}")
 
     # Chat interface
-    st.header("Chat")  # No key
+    st.header("Chat")
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.write(message["content"])
