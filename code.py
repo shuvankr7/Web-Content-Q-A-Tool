@@ -15,16 +15,9 @@ import os
 # Set page config at the very beginning
 st.set_page_config(page_title="RAG Chat Assistant", layout="wide")
 st.title("RAG Chat Assistant")
-
-import os
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
-
-# Set OpenMP environment variable to avoid errors
-if "KMP_DUPLICATE_LIB_OK" not in os.environ:
-    os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+os.environ["USER_AGENT"] = "RAG-Chat-Assistant/1.0"
+USER_AGENT=RAG-Chat-Assistant/1.0
+KMP_DUPLICATE_LIB_OK=TRUE
 
 
 
@@ -51,24 +44,15 @@ with st.sidebar:
     # Model selection
     model_choice = st.radio(
         "Select LLM Provider",
-        ["Claude (Anthropic)", "Groq"]
+        [ "Groq"]
     )
-    
-    # API Keys based on model choice
-    if model_choice == "Claude (Anthropic)":
-        anthropic_api_key = st.text_input("Anthropic API Key", type="password")
-        
-        claude_model = st.selectbox(
-            "Claude Model",
-            ["claude-3-sonnet-20240229", "claude-3-opus-20240229", "claude-3-haiku-20240307"]
-        )
-    else:
-        groq_api_key = st.text_input("Groq API Key", 
+
+    groq_api_key = st.text_input("Groq API Key", 
                                      value=DEFAULT_GROQ_API_KEY, 
                                      type="password",
                                      help="You can use the provided API key or enter your own")
         
-        groq_model = st.selectbox(
+    groq_model = st.selectbox(
             "Groq Model",
             ["llama3-70b-8192", "mixtral-8x7b-32768", "llama3-8b-8192"]
         )
@@ -140,29 +124,14 @@ def create_question_answering_chain(llm):
 
 def initialize_rag_system():
     # Create LLM based on user choice
-    if model_choice == "Claude (Anthropic)":
-        # Check if Anthropic API key is provided
-        if not anthropic_api_key:
-            st.sidebar.error("Please enter your Anthropic API key")
-            return None
-            
-        # Initialize Claude LLM
-        llm = ChatAnthropic(
-            model=claude_model, 
-            api_key=anthropic_api_key,
-            temperature=temperature,
-            max_tokens=max_tokens
-        )
-        st.sidebar.success(f"Using Claude LLM: {claude_model}")
-    else:
-        # Initialize Groq LLM with the provided or default API key
-        llm = ChatGroq(
+
+    llm = ChatGroq(
             api_key=groq_api_key,
             model=groq_model,
             temperature=temperature,
             max_tokens=max_tokens
         )
-        st.sidebar.success(f"Using Groq LLM: {groq_model}")
+    st.sidebar.success(f"Using Groq LLM: {groq_model}")
 
     contextualize_q_system_prompt = (
     """You are tasked with answering a question based on three sources of context:
