@@ -16,8 +16,8 @@ import os
 st.set_page_config(page_title="RAG Chat Assistant", layout="wide")
 st.title("RAG Chat Assistant")
 os.environ["USER_AGENT"] = "RAG-Chat-Assistant/1.0"
-USER_AGENT=RAG-Chat-Assistant/1.0
-KMP_DUPLICATE_LIB_OK=TRUE
+USER_AGENT="RAG-Chat-Assistant/1.0"
+KMP_DUPLICATE_LIB_OK=True
 
 
 
