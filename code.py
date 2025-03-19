@@ -1,3 +1,5 @@
+streamlit.set_page_config(page_title="RAG Chat Assistant", layout="wide")
+
 import os
 import streamlit as st
 from langchain_groq import ChatGroq
@@ -12,7 +14,6 @@ from langchain_core.messages import HumanMessage, AIMessage
 from langchain_community.vectorstores import FAISS
 
 # ✅ Move this to the first line
-st.set_page_config(page_title="RAG Chat Assistant", layout="wide")
 
 # Environment variables
 os.environ["USER_AGENT"] = "RAG-Chat-Assistant/1.0"
