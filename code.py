@@ -16,6 +16,19 @@ import os
 st.set_page_config(page_title="RAG Chat Assistant", layout="wide")
 st.title("RAG Chat Assistant")
 
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Set OpenMP environment variable to avoid errors
+if "KMP_DUPLICATE_LIB_OK" not in os.environ:
+    os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+
+
+
+
 # Define session state
 if "retriever" not in st.session_state:
     st.session_state.retriever = None
