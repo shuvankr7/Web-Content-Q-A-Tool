@@ -1,6 +1,5 @@
 # Core dependencies
-torch==2.2.0
-scikit-learn==1.5.2
+torch==2.3.0+cpu -f https://download.pytorch.org/whl/torch_stable.htmlscikit-learn==1.5.2
 numpy==1.26.4
 streamlit>=1.32.0
 langchain>=0.1.0
