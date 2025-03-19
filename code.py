@@ -86,11 +86,19 @@ def create_embeddings(documents):
     """Create embeddings for the documents using HuggingFaceEmbeddings and FAISS."""
     with st.spinner("Creating embeddings and vector store..."):
         try:
-            embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+            # Add this configuration to prevent HF from using Streamlit's config
+            os.environ["TOKENIZERS_PARALLELISM"] = "false"
+            
+            embeddings = HuggingFaceEmbeddings(
+                model_name="all-MiniLM-L6-v2",
+                # Disable showing progress bars which might call Streamlit functions
+                show_progress=False
+            )
+            
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=5000, chunk_overlap=500)
             splits = text_splitter.split_documents(documents)
             
-            # Create FAISS vector store instead of Chroma
+            # Create FAISS vector store
             vectorstore = FAISS.from_documents(documents=splits, embedding=embeddings)
             st.success("Vector store created successfully")
             return vectorstore.as_retriever()
