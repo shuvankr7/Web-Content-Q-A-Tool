@@ -68,11 +68,10 @@ def create_embeddings(documents):
 # Create question-answering chain
 def create_question_answering_chain(llm):
     system_prompt = (
-        "You are an assistant for question-answering tasks. "
-        "Use the following pieces of retrieved context to answer "
-        "the question. If you don't know the answer, say that you "
-        "don't know. Use three sentences maximum and keep the "
-        "answer concise.\n\n{context}"
+        ""You are a precise question-answering assistant. "
+    "Answer the user's question using only the context provided from the scraped URL content and the chat history. "
+    "Do not use external knowledge beyond what is retrieved. "
+    "Keep your answer concise, limited to three sentences maximum, and say 'I don’t know' if the context lacks the answer.\n\n{context}"
     )
     qa_prompt = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
@@ -93,11 +92,10 @@ def initialize_rag_system(groq_api_key, groq_model, temperature, max_tokens):
         st.sidebar.success(f"Using Groq LLM: {groq_model}")
 
         contextualize_q_system_prompt = (
-            "You are tasked with answering a question based on three sources of context: "
-            "1. **Website Content:** The text extracted from the user's provided URLs. "
-            "2. **Chat History:** The conversation history between the user and the assistant. "
-            "3. **User Question:** The current question being asked by the user. "
-            "Please answer the following question based only on the above context, and provide a concise, relevant, and clear response.\n\nQuestion: {input}"
+            "You are a precise question-answering assistant. "
+            "Rephrase the user's question to incorporate context from the scraped URL content and chat history, "
+            "ensuring it relies only on this information and not external knowledge. "
+            "Keep the rephrased question clear and concise.\n\nQuestion: {input}"
         )
 
         contextualize_q_prompt = ChatPromptTemplate.from_messages([
