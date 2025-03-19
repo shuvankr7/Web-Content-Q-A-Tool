@@ -10,6 +10,8 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_community.vectorstores import FAISS
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
 
 # Set environment variables before imports
 os.environ["USER_AGENT"] = "RAG-Chat-Assistant/1.0"
@@ -18,6 +20,9 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # Default Groq API key
 DEFAULT_GROQ_API_KEY = "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"
+
+# Initialize embeddings globally for reuse
+embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2", model_kwargs={"device": "cpu"}, show_progress=False)
 
 # Initialize session state
 def initialize_session_state():
@@ -183,7 +188,7 @@ def main():
         with st.chat_message(message["role"]):
             st.write(message["content"])
 
-    # Handle chat input
+    # Handle chat input with relevance score
     if user_input := st.chat_input("Ask a question about the loaded content...", key="chat_input_unique"):
         if not st.session_state.loaded_url:
             st.error("Please load a URL first.")
@@ -202,7 +207,18 @@ def main():
                             "chat_history": st.session_state.chat_history.messages
                         })
                         response = result.get('answer') or result.get('output') or next(iter(result.values()), "I don't know.")
+                        
+                        # Calculate relevance score
+                        question_embedding = embeddings.embed_query(user_input)
+                        answer_embedding = embeddings.embed_query(response)
+                        relevance_score = cosine_similarity(
+                            np.array(question_embedding).reshape(1, -1),
+                            np.array(answer_embedding).reshape(1, -1)
+                        )[0][0]
+                        relevance_percent = round(relevance_score * 100, 2)
+
                         st.write(response)
+                        st.write(f"**Relevance Score:** {relevance_percent}%")
                         bot_message = AIMessage(content=response)
                         st.session_state.chat_history.add_message(bot_message)
                         st.session_state.messages.append({"role": "assistant", "content": response})
