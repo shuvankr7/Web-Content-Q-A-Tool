@@ -11,7 +11,7 @@ from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_community.vectorstores import FAISS
 
-# Set environment variables before any imports that might use them
+# Set environment variables before imports
 os.environ["USER_AGENT"] = "RAG-Chat-Assistant/1.0"
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -114,7 +114,7 @@ def main():
 
     # Sidebar configuration
     with st.sidebar:
-        st.header("Configuration", key="sidebar_config_header")
+        st.sidebar.header("Configuration", key="sidebar_config_header")  # Changed to st.sidebar.header()
         groq_api_key = st.text_input(
             "Groq API Key",
             value=DEFAULT_GROQ_API_KEY,
