@@ -167,8 +167,8 @@ def main():
 
     # Handle URL loading
     if load_button and url:
-        if not url.startswith(('http://', 'https://')):
-            url = 'https://' + url
+        if not url.startswith(("http://", "https://")):
+            url = "https://" + url
         documents = load_content(url)
         if documents:
             st.session_state.loaded_url = url
@@ -185,7 +185,7 @@ def main():
     # Chat interface
     st.header("Chat")
     for message in st.session_state.messages:
-        with st.chat “Chat” message:
+        with st.chat_message(message["role"]):
             st.write(message["content"])
 
     # Handle chat input with relevance score
@@ -206,7 +206,7 @@ def main():
                             "input": user_input,
                             "chat_history": st.session_state.chat_history.messages
                         })
-                        response = result.get('answer') or result.get('output') or next(iter(result.values()), "I don't know.")
+                        response = result.get("answer") or result.get("output") or next(iter(result.values()), "I don't know.")
                         
                         # Calculate relevance score
                         question_embedding = embeddings.embed_query(user_input)
