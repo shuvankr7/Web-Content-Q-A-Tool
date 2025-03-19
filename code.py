@@ -10,14 +10,13 @@ from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_community.vectorstores import FAISS
 import os
-import uuid
 
 # Set page config at the very beginning
 os.environ["USER_AGENT"] = "RAG-Chat-Assistant/1.0"
 USER_AGENT = "RAG-Chat-Assistant/1.0"
 KMP_DUPLICATE_LIB_OK = True
 
-# Define session state
+# Initialize session state variables
 if "retriever" not in st.session_state:
     st.session_state.retriever = None
 if "rag_chain" not in st.session_state:
@@ -28,64 +27,88 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = ChatMessageHistory()
 if "loaded_url" not in st.session_state:
     st.session_state.loaded_url = None
+if "url_input" not in st.session_state:
+    st.session_state.url_input = ""
 
-# Default Groq API key
-DEFAULT_GROQ_API_KEY = "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"
+# Initialize configuration values in session state
+if "groq_api_key" not in st.session_state:
+    st.session_state.groq_api_key = "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"
+if "groq_model" not in st.session_state:
+    st.session_state.groq_model = "llama3-70b-8192"
+if "temperature" not in st.session_state:
+    st.session_state.temperature = 0.5
+if "max_tokens" not in st.session_state:
+    st.session_state.max_tokens = 1024
+
+# Callback functions to update session state
+def update_api_key():
+    st.session_state.groq_api_key = st.session_state.api_key_input
+
+def update_model():
+    st.session_state.groq_model = st.session_state.model_input
+
+def update_temperature():
+    st.session_state.temperature = st.session_state.temp_input
+
+def update_max_tokens():
+    st.session_state.max_tokens = st.session_state.tokens_input
+
+def update_url():
+    st.session_state.url_input = st.session_state.url_field
 
 # Sidebar Configuration
 with st.sidebar:
     st.header("Configuration")
-
-    groq_api_key = st.text_input(
-    "Groq API Key", 
-    value=DEFAULT_GROQ_API_KEY, 
-    type="password",
-    help="You can use the provided API key or enter your own",
-    key=f"groq_api_key_{str(uuid.uuid4())[:8]}"  # Generate a unique key with UUID
-)
-
-
-    groq_model = st.selectbox(
-    "Groq Model",
-    ["llama3-70b-8192"],
-    key="groq_model_selector"  # Add this unique key
-)
-
-    temperature = st.slider(
-    "Temperature", 
-    min_value=0.0, 
-    max_value=1.0, 
-    value=0.5, 
-    step=0.1,
-    key="temperature_slider"
-)
-
-max_tokens = st.slider(
-    "Max Tokens", 
-    min_value=256, 
-    max_value=4096, 
-    value=1024, 
-    step=256,
-    key="max_tokens_slider"
-)
+    
+    st.text_input(
+        "Groq API Key", 
+        value=st.session_state.groq_api_key, 
+        key="api_key_input",
+        type="password",
+        help="You can use the provided API key or enter your own",
+        on_change=update_api_key
+    )
+    
+    st.selectbox(
+        "Groq Model",
+        ["llama3-70b-8192"],
+        index=0,
+        key="model_input",
+        on_change=update_model
+    )
+    
+    st.slider(
+        "Temperature", 
+        min_value=0.0, 
+        max_value=1.0, 
+        value=st.session_state.temperature, 
+        step=0.1,
+        key="temp_input",
+        on_change=update_temperature
+    )
+    
+    st.slider(
+        "Max Tokens", 
+        min_value=256, 
+        max_value=4096, 
+        value=st.session_state.max_tokens, 
+        step=256,
+        key="tokens_input",
+        on_change=update_max_tokens
+    )
 
 # URL input
-if "url_input" not in st.session_state:
-    st.session_state.url_input = ""
 url_col1, url_col2 = st.columns([3, 1])
 with url_col1:
-    url = st.text_input(
+    st.text_input(
         "Enter a URL to load content from:", 
-        key="url_input_field",
-        value=st.session_state.url_input
+        value=st.session_state.url_input,
+        key="url_field",
+        on_change=update_url
     )
-    # Update session state when URL changes
-    st.session_state.url_input = url
     
 with url_col2:
-    load_button = st.button("Load Content", key="load_content_button")
-    
-
+    load_button = st.button("Load Content", key="load_button")
 
 # Functions
 def load_content(url):
@@ -139,12 +162,12 @@ def create_question_answering_chain(llm):
 def initialize_rag_system():
     """Initialize the RAG system with Groq LLM."""
     llm = ChatGroq(
-        api_key=groq_api_key,
-        model=groq_model,
-        temperature=temperature,
-        max_tokens=max_tokens
+        api_key=st.session_state.groq_api_key,
+        model=st.session_state.groq_model,
+        temperature=st.session_state.temperature,
+        max_tokens=st.session_state.max_tokens
     )
-    st.sidebar.success(f"Using Groq LLM: {groq_model}")
+    st.sidebar.success(f"Using Groq LLM: {st.session_state.groq_model}")
 
     contextualize_q_system_prompt = (
         """You are tasked with answering a question based on three sources of context:
@@ -168,7 +191,8 @@ def initialize_rag_system():
     return rag_chain
 
 # Load content when button is clicked
-if load_button and url:
+if load_button and st.session_state.url_input:
+    url = st.session_state.url_input
     if not url.startswith(('http://', 'https://')):
         url = 'https://' + url
     
@@ -195,7 +219,7 @@ for message in st.session_state.messages:
         st.write(message["content"])
 
 # Handle user input
-if user_input := st.chat_input("Ask a question about the loaded content..."):
+if user_input := st.chat_input("Ask a question about the loaded content...", key="chat_input"):
     if not st.session_state.loaded_url:
         st.error("Please load a URL first.")
     else:
@@ -224,7 +248,8 @@ if user_input := st.chat_input("Ask a question about the loaded content..."):
                     st.error(f"Error: {e}")
 
 # Clear chat button
-if st.button("Clear Chat"):
+def clear_chat():
     st.session_state.messages = []
     st.session_state.chat_history = ChatMessageHistory()
-    st.success("Chat history cleared!")
+
+st.button("Clear Chat", key="clear_button", on_click=clear_chat)
