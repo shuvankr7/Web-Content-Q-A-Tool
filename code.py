@@ -10,11 +10,17 @@ from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_community.vectorstores import FAISS
 import os
+import time
 
 # Set page config at the very beginning
 os.environ["USER_AGENT"] = "RAG-Chat-Assistant/1.0"
 USER_AGENT = "RAG-Chat-Assistant/1.0"
 KMP_DUPLICATE_LIB_OK = True
+
+# Generate a unique ID for this session to use in keys
+if "session_id" not in st.session_state:
+    st.session_state.session_id = int(time.time() * 1000)
+session_id = st.session_state.session_id
 
 # Initialize session state variables
 if "retriever" not in st.session_state:
@@ -29,8 +35,6 @@ if "loaded_url" not in st.session_state:
     st.session_state.loaded_url = None
 if "url_input" not in st.session_state:
     st.session_state.url_input = ""
-
-# Initialize configuration values in session state
 if "groq_api_key" not in st.session_state:
     st.session_state.groq_api_key = "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"
 if "groq_model" not in st.session_state:
@@ -40,21 +44,21 @@ if "temperature" not in st.session_state:
 if "max_tokens" not in st.session_state:
     st.session_state.max_tokens = 1024
 
-# Callback functions to update session state
-def update_api_key():
-    st.session_state.groq_api_key = st.session_state.api_key_input
+# Create simplified state update functions
+def set_api_key():
+    st.session_state.groq_api_key = st.session_state[f"api_key_{session_id}"]
 
-def update_model():
-    st.session_state.groq_model = st.session_state.model_input
+def set_model():
+    st.session_state.groq_model = st.session_state[f"model_{session_id}"]
 
-def update_temperature():
-    st.session_state.temperature = st.session_state.temp_input
+def set_temperature():
+    st.session_state.temperature = st.session_state[f"temp_{session_id}"]
 
-def update_max_tokens():
-    st.session_state.max_tokens = st.session_state.tokens_input
+def set_max_tokens():
+    st.session_state.max_tokens = st.session_state[f"tokens_{session_id}"]
 
-def update_url():
-    st.session_state.url_input = st.session_state.url_field
+def set_url_input():
+    st.session_state.url_input = st.session_state[f"url_field_{session_id}"]
 
 # Sidebar Configuration
 with st.sidebar:
@@ -63,18 +67,18 @@ with st.sidebar:
     st.text_input(
         "Groq API Key", 
         value=st.session_state.groq_api_key, 
-        key="api_key_input",
+        key=f"api_key_{session_id}",
         type="password",
         help="You can use the provided API key or enter your own",
-        on_change=update_api_key
+        on_change=set_api_key
     )
     
     st.selectbox(
         "Groq Model",
         ["llama3-70b-8192"],
         index=0,
-        key="model_input",
-        on_change=update_model
+        key=f"model_{session_id}",
+        on_change=set_model
     )
     
     st.slider(
@@ -83,8 +87,8 @@ with st.sidebar:
         max_value=1.0, 
         value=st.session_state.temperature, 
         step=0.1,
-        key="temp_input",
-        on_change=update_temperature
+        key=f"temp_{session_id}",
+        on_change=set_temperature
     )
     
     st.slider(
@@ -93,8 +97,8 @@ with st.sidebar:
         max_value=4096, 
         value=st.session_state.max_tokens, 
         step=256,
-        key="tokens_input",
-        on_change=update_max_tokens
+        key=f"tokens_{session_id}",
+        on_change=set_max_tokens
     )
 
 # URL input
@@ -103,12 +107,12 @@ with url_col1:
     st.text_input(
         "Enter a URL to load content from:", 
         value=st.session_state.url_input,
-        key="url_field",
-        on_change=update_url
+        key=f"url_field_{session_id}",
+        on_change=set_url_input
     )
     
 with url_col2:
-    load_button = st.button("Load Content", key="load_button")
+    load_button = st.button("Load Content", key=f"load_button_{session_id}")
 
 # Functions
 def load_content(url):
@@ -219,7 +223,7 @@ for message in st.session_state.messages:
         st.write(message["content"])
 
 # Handle user input
-if user_input := st.chat_input("Ask a question about the loaded content...", key="chat_input"):
+if user_input := st.chat_input("Ask a question about the loaded content...", key=f"chat_input_{session_id}"):
     if not st.session_state.loaded_url:
         st.error("Please load a URL first.")
     else:
@@ -252,4 +256,4 @@ def clear_chat():
     st.session_state.messages = []
     st.session_state.chat_history = ChatMessageHistory()
 
-st.button("Clear Chat", key="clear_button", on_click=clear_chat)
+st.button("Clear Chat", key=f"clear_button_{session_id}", on_click=clear_chat)
