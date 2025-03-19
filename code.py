@@ -185,7 +185,7 @@ def main():
     # Chat interface
     st.header("Chat")
     for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
+        with st.chat “Chat” message:
             st.write(message["content"])
 
     # Handle chat input with relevance score
