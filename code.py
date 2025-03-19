@@ -13,8 +13,8 @@ from langchain_community.vectorstores import FAISS
 import os
 
 # Set page config at the very beginning
-st.set_page_config(page_title="RAG Chat Assistant", layout="wide")
-st.title("RAG Chat Assistant")
+# st.set_page_config(page_title="RAG Chat Assistant", layout="wide")
+# st.title("RAG Chat Assistant")
 os.environ["USER_AGENT"] = "RAG-Chat-Assistant/1.0"
 USER_AGENT="RAG-Chat-Assistant/1.0"
 KMP_DUPLICATE_LIB_OK=True
