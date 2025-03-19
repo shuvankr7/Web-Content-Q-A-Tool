@@ -112,9 +112,12 @@ def main():
     st.set_page_config(page_title="RAG Chat Assistant", layout="wide")
     initialize_session_state()
 
+    # Display Streamlit version for debugging
+    st.write(f"Streamlit version: {st.__version__}")
+
     # Sidebar configuration
     with st.sidebar:
-        st.sidebar.header("Configuration", key="sidebar_config_header")  # Changed to st.sidebar.header()
+        st.sidebar.header("Configuration")  # Removed key parameter
         groq_api_key = st.text_input(
             "Groq API Key",
             value=DEFAULT_GROQ_API_KEY,
