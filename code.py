@@ -54,7 +54,7 @@ with st.sidebar:
         
     groq_model = st.selectbox(
             "Groq Model",
-            ["llama3-70b-8192", "mixtral-8x7b-32768", "llama3-8b-8192"]
+            ["llama3-70b-8192"]
         )
     
     temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
@@ -171,12 +171,10 @@ if load_button and url:
         
         if st.session_state.retriever:
             # Check if API key is provided when using Anthropic
-            if model_choice == "Claude (Anthropic)" and not anthropic_api_key:
-                st.sidebar.error("Please enter your Anthropic API key to initialize the RAG system")
-            else:
-                st.session_state.rag_chain = initialize_rag_system()
-                if st.session_state.rag_chain:
-                    st.success("RAG system initialized and ready to use!")
+            
+            st.session_state.rag_chain = initialize_rag_system()
+            if st.session_state.rag_chain:
+                st.success("RAG system initialized and ready to use!")
 
 # Display loaded URL status
 if st.session_state.loaded_url:
@@ -196,10 +194,7 @@ if user_input := st.chat_input("Ask a question about the loaded content..."):
     if not st.session_state.loaded_url:
         st.error("Please load a URL first.")
     # Check if API key is provided when using Anthropic
-    elif model_choice == "Claude (Anthropic)" and not anthropic_api_key:
-        st.error("Please enter your Anthropic API key in the sidebar.")
-    elif not st.session_state.rag_chain:
-        st.error("RAG system is not initialized. Please check your configuration.")
+    
     else:
         # Add user message to chat history
         st.session_state.messages.append({"role": "user", "content": user_input})
