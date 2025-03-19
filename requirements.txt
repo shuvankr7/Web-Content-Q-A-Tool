@@ -7,7 +7,9 @@ langchain-community>=0.0.16
 langchain-core>=0.1.15
 langchain-huggingface>=0.0.2
 langchain-text-splitters>=0.0.1
-langchain-chroma>=0.0.10
+
+# For vector store
+faiss-cpu>=1.7.4
 
 # For web scraping
 beautifulsoup4>=4.12.2
@@ -15,8 +17,6 @@ requests>=2.31.0
 
 # For embeddings
 sentence-transformers>=2.2.2
-chromadb>=0.4.22
-faiss-cpu>=1.7.4
 
 # For handling environment variables
 python-dotenv>=1.0.0
