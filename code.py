@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 from langchain_groq import ChatGroq
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
@@ -9,13 +10,13 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_community.vectorstores import FAISS
-import os
 
-# Set page config at the very beginning
+# ✅ Move this to the first line
 st.set_page_config(page_title="RAG Chat Assistant", layout="wide")
+
+# Environment variables
 os.environ["USER_AGENT"] = "RAG-Chat-Assistant/1.0"
-USER_AGENT = "RAG-Chat-Assistant/1.0"
-KMP_DUPLICATE_LIB_OK = True
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 # Initialize session state variables
 if "retriever" not in st.session_state:
@@ -29,7 +30,7 @@ if "chat_history" not in st.session_state:
 if "loaded_url" not in st.session_state:
     st.session_state.loaded_url = None
 
-# Default Groq API key (for testing; replace for security)
+# Default Groq API key (replace for security)
 DEFAULT_GROQ_API_KEY = "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"
 
 # Sidebar Configuration
@@ -40,20 +41,14 @@ with st.sidebar:
         "Groq API Key", 
         value=DEFAULT_GROQ_API_KEY, 
         type="password",
-        key="groq_api_key_input",  # Unique key to prevent duplicate ID error
-        help="Enter your Groq API key"
+        key="groq_api_key_input"
     )
 
-    groq_model = st.selectbox(
-        "Groq Model",
-        ["llama3-70b-8192"],
-        key="groq_model_select"
-    )
+    groq_model = st.selectbox("Groq Model", ["llama3-70b-8192"], key="groq_model_select")
+    temperature = st.slider("Temperature", 0.0, 1.0, 0.5, 0.1, key="temperature_slider")
+    max_tokens = st.slider("Max Tokens", 256, 4096, 1024, 256, key="max_tokens_slider")
 
-    temperature = st.slider("Temperature", min_value=0.0, max_value=1.0, value=0.5, step=0.1, key="temperature_slider")
-    max_tokens = st.slider("Max Tokens", min_value=256, max_value=4096, value=1024, step=256, key="max_tokens_slider")
-
-# URL input
+# URL input section
 url_col1, url_col2 = st.columns([3, 1])
 with url_col1:
     url = st.text_input("🔗 Enter a URL to load content from:", key="url_input")
@@ -62,7 +57,6 @@ with url_col2:
 
 # Functions
 def load_content(url):
-    """Load content from a URL using WebBaseLoader."""
     with st.spinner(f"📥 Loading content from {url}..."):
         try:
             loader = WebBaseLoader(url)
@@ -74,15 +68,9 @@ def load_content(url):
             return None
 
 def create_embeddings(documents):
-    """Create embeddings for the documents using HuggingFaceEmbeddings and FAISS."""
     with st.spinner("🔄 Creating embeddings and vector store..."):
         try:
-            os.environ["TOKENIZERS_PARALLELISM"] = "false"
-            
-            embeddings = HuggingFaceEmbeddings(
-                model_name="all-MiniLM-L6-v2",
-                show_progress=False
-            )
+            embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2", show_progress=False)
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=5000, chunk_overlap=500)
             splits = text_splitter.split_documents(documents)
             
@@ -94,13 +82,9 @@ def create_embeddings(documents):
             return None
 
 def create_question_answering_chain(llm):
-    """Create a question-answering chain using the given LLM."""
     system_prompt = (
         "You are an assistant for question-answering tasks. "
-        "Use the following pieces of retrieved context to answer "
-        "the question. If you don't know the answer, say that you "
-        "don't know. Use three sentences maximum and keep the "
-        "answer concise.\n\n{context}"  
+        "Use the retrieved context to answer the question concisely.\n\n{context}"  
     )
     qa_prompt = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
@@ -110,7 +94,6 @@ def create_question_answering_chain(llm):
     return create_stuff_documents_chain(llm, qa_prompt)
 
 def initialize_rag_system():
-    """Initialize the RAG system with Groq LLM."""
     llm = ChatGroq(
         api_key=groq_api_key,
         model=groq_model,
