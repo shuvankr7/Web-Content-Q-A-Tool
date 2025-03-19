@@ -12,7 +12,6 @@ from langchain_core.messages import HumanMessage, AIMessage
 from langchain_community.vectorstores import FAISS
 import os
 
-# App title
 st.set_page_config(page_title="RAG Chat Assistant", layout="wide")
 st.title("RAG Chat Assistant")
 
