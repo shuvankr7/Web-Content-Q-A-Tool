@@ -1,6 +1,4 @@
 import streamlit as st
-st.set_page_config(page_title="RAG Chat Assistant", layout="wide")
-st.title("RAG Chat Assistant")
 from langchain_anthropic import ChatAnthropic
 from langchain_groq import ChatGroq
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
@@ -11,12 +9,13 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.messages import HumanMessage, AIMessage
-from langchain_community.vectorstores import FAISS  # Using FAISS instead of Chroma
+from langchain_community.vectorstores import FAISS
 import os
 
 # Set page config at the very beginning
+st.set_page_config(page_title="RAG Chat Assistant", layout="wide")
+st.title("RAG Chat Assistant")
 
-groq_api_key = "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"
 # Define session state
 if "retriever" not in st.session_state:
     st.session_state.retriever = None
@@ -28,6 +27,9 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = ChatMessageHistory()
 if "loaded_url" not in st.session_state:
     st.session_state.loaded_url = None
+
+# Default Groq API key
+DEFAULT_GROQ_API_KEY = "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"
 
 # Sidebar for API keys and model selection
 with st.sidebar:
@@ -48,7 +50,10 @@ with st.sidebar:
             ["claude-3-sonnet-20240229", "claude-3-opus-20240229", "claude-3-haiku-20240307"]
         )
     else:
-        groq_api_key = st.text_input("Groq API Key", type="password")
+        groq_api_key = st.text_input("Groq API Key", 
+                                     value=DEFAULT_GROQ_API_KEY, 
+                                     type="password",
+                                     help="You can use the provided API key or enter your own")
         
         groq_model = st.selectbox(
             "Groq Model",
@@ -92,7 +97,7 @@ def create_embeddings(documents):
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=5000, chunk_overlap=500)
             splits = text_splitter.split_documents(documents)
             
-            # Use FAISS instead of Chroma
+            # Create FAISS vector store instead of Chroma
             vectorstore = FAISS.from_documents(documents=splits, embedding=embeddings)
             st.success("Vector store created successfully")
             return vectorstore.as_retriever()
@@ -137,12 +142,7 @@ def initialize_rag_system():
         )
         st.sidebar.success(f"Using Claude LLM: {claude_model}")
     else:
-        # Check if Groq API key is provided
-        if not groq_api_key:
-            st.sidebar.error("Please enter your Groq API key")
-            return None
-            
-        # Initialize Groq LLM
+        # Initialize Groq LLM with the provided or default API key
         llm = ChatGroq(
             api_key=groq_api_key,
             model=groq_model,
@@ -188,9 +188,13 @@ if load_button and url:
         st.session_state.retriever = create_embeddings(documents)
         
         if st.session_state.retriever:
-            st.session_state.rag_chain = initialize_rag_system()
-            if st.session_state.rag_chain:
-                st.success("RAG system initialized and ready to use!")
+            # Check if API key is provided when using Anthropic
+            if model_choice == "Claude (Anthropic)" and not anthropic_api_key:
+                st.sidebar.error("Please enter your Anthropic API key to initialize the RAG system")
+            else:
+                st.session_state.rag_chain = initialize_rag_system()
+                if st.session_state.rag_chain:
+                    st.success("RAG system initialized and ready to use!")
 
 # Display loaded URL status
 if st.session_state.loaded_url:
@@ -209,11 +213,9 @@ if user_input := st.chat_input("Ask a question about the loaded content..."):
     # Don't allow input until URL is loaded
     if not st.session_state.loaded_url:
         st.error("Please load a URL first.")
-    # Check if API key is provided
+    # Check if API key is provided when using Anthropic
     elif model_choice == "Claude (Anthropic)" and not anthropic_api_key:
         st.error("Please enter your Anthropic API key in the sidebar.")
-    elif model_choice == "Groq" and not groq_api_key:
-        st.error("Please enter your Groq API key in the sidebar.")
     elif not st.session_state.rag_chain:
         st.error("RAG system is not initialized. Please check your configuration.")
     else:
