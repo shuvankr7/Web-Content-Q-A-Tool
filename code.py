@@ -117,7 +117,7 @@ def main():
 
     # Sidebar configuration
     with st.sidebar:
-        st.sidebar.header("Configuration")  # Removed key parameter
+        st.sidebar.header("Configuration")  # No key
         groq_api_key = st.text_input(
             "Groq API Key",
             value=DEFAULT_GROQ_API_KEY,
@@ -148,7 +148,7 @@ def main():
         )
 
     # URL input section
-    st.header("Load Content", key="load_content_header")
+    st.header("Load Content")  # No key
     url_col1, url_col2 = st.columns([3, 1])
     with url_col1:
         url = st.text_input("Enter a URL to load content from:", key="url_input_unique")
@@ -173,7 +173,7 @@ def main():
         st.info(f"Currently using content from: {st.session_state.loaded_url}")
 
     # Chat interface
-    st.header("Chat", key="chat_header_unique")
+    st.header("Chat")  # No key
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.write(message["content"])
