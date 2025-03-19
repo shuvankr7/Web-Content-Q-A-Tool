@@ -36,12 +36,12 @@ with st.sidebar:
     st.header("Configuration")
 
     groq_api_key = st.text_input(
-        "Groq API Key", 
-        value=DEFAULT_GROQ_API_KEY, 
-        type="password",
-        help="You can use the provided API key or enter your own"
-    )
-
+    "Groq API Key", 
+    value=DEFAULT_GROQ_API_KEY, 
+    type="password",
+    help="You can use the provided API key or enter your own",
+    key="groq_api_key_input"  # Add unique key
+)
     groq_model = st.selectbox(
         "Groq Model",
         ["llama3-70b-8192"]
@@ -53,7 +53,10 @@ with st.sidebar:
 # URL input
 url_col1, url_col2 = st.columns([3, 1])
 with url_col1:
-    url = st.text_input("Enter a URL to load content from:")
+    url = st.text_input(
+        "Enter a URL to load content from:",
+        key="url_input"  # Add unique key
+    )
 with url_col2:
     load_button = st.button("Load Content")
 
