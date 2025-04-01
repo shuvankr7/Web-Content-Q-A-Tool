@@ -114,7 +114,7 @@ def initialize_rag_system(groq_api_key, groq_model, temperature, max_tokens):
 
 # Main app
 def main():
-    st.set_page_config(page_title="RAG Chat Assistant", layout="wide")
+    st.set_page_config(page_title="Chat Assistant", layout="wide")
     initialize_session_state()
 
     # Display Streamlit version for debugging
