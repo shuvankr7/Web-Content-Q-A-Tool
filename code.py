@@ -119,7 +119,7 @@ def main():
 
     # Display Streamlit version for debugging
     st.write(f"Streamlit version: {st.__version__}")
-
+    groq_api_key = DEFAULT_GROQ_API_KEY
     # Sidebar configuration
     with st.sidebar:
         st.sidebar.header("Configuration")
