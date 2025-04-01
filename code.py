@@ -121,6 +121,7 @@ def main():
     st.write(f"Streamlit version: {st.__version__}")
     groq_api_key = DEFAULT_GROQ_API_KEY
     groq_model = "llama3-70b-8192"
+    max_tokens= 1024
     # Sidebar configuration
     with st.sidebar:
         st.sidebar.header("Configuration")
@@ -144,14 +145,14 @@ def main():
             step=0.1,
             key="temperature_slider_unique"
         )
-        max_tokens = st.slider(
-            "Max Tokens",
-            min_value=256,
-            max_value=4096,
-            value=1024,
-            step=256,
-            key="max_tokens_slider_unique"
-        )
+        # max_tokens = st.slider(
+        #     "Max Tokens",
+        #     min_value=256,
+        #     max_value=4096,
+        #     value=1024,
+        #     step=256,
+        #     key="max_tokens_slider_unique"
+        # )
 
     # URL input section
     st.header("Load Content")
