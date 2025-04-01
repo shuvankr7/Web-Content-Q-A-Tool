@@ -123,18 +123,18 @@ def main():
     # Sidebar configuration
     with st.sidebar:
         st.sidebar.header("Configuration")
-        groq_api_key = st.text_input(
-            "Groq API Key",
-            value=DEFAULT_GROQ_API_KEY,
-            type="password",
-            help="Use the provided key or enter your own",
-            key="groq_api_key_input_unique"
-        )
-        groq_model = st.selectbox(
-            "Groq Model",
-            ["llama3-70b-8192"],
-            key="groq_model_select_unique"
-        )
+        # groq_api_key = st.text_input(
+        #     "Groq API Key",
+        #     value=DEFAULT_GROQ_API_KEY,
+        #     type="password",
+        #     help="Use the provided key or enter your own",
+        #     key="groq_api_key_input_unique"
+        # )
+        # groq_model = st.selectbox(
+        #     "Groq Model",
+        #     ["llama3-70b-8192"],
+        #     key="groq_model_select_unique"
+        # )
         temperature = st.slider(
             "Temperature",
             min_value=0.0,
