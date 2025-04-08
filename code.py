@@ -53,7 +53,7 @@ def create_embeddings(documents):
             # Explicitly import torch to ensure it’s fully loaded
             import torch
             # Use a lightweight model and CPU-only to avoid GPU-related issues
-            sentence_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+            sentence_model = SentenceTransformer("all-MiniLM-L6-v2")
             embeddings = HuggingFaceEmbeddings(model=sentence_model)
 
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=5000, chunk_overlap=500)
