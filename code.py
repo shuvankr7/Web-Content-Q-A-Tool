@@ -17,9 +17,11 @@ os.environ["USER_AGENT"] = "RAG-Chat-Assistant/1.0"
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-# Default Groq API key
+# Groq API setup
 DEFAULT_GROQ_API_KEY = "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"
+GROQ_MODEL = "llama3-70b-8192"
 
+# Initialize session state
 def initialize_session_state():
     if "retriever" not in st.session_state:
         st.session_state.retriever = None
@@ -32,37 +34,26 @@ def initialize_session_state():
     if "loaded_url" not in st.session_state:
         st.session_state.loaded_url = None
 
+# Load webpage content
 def load_content(url):
     with st.spinner(f"Loading content from {url}..."):
         try:
             loader = WebBaseLoader(url)
             documents = loader.load()
-            if not documents:
-                st.warning("No content found at the provided URL.")
-                return None
-            st.success("Successfully loaded content!")
+            st.success(f"Successfully loaded content from {url}")
             return documents
         except Exception as e:
             st.error(f"Error loading content: {str(e)}")
             return None
 
+# Create embeddings and retriever
 def create_embeddings(documents):
     with st.spinner("Creating embeddings and vector store..."):
         try:
-            if not documents:
-                st.warning("No documents to embed.")
-                return None
-            import torch
             sentence_model = SentenceTransformer("all-MiniLM-L6-v2")
             embeddings = HuggingFaceEmbeddings(model=sentence_model)
-
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=5000, chunk_overlap=500)
             splits = text_splitter.split_documents(documents)
-
-            if not splits:
-                st.warning("Document splitting failed or produced empty chunks.")
-                return None
-
             vectorstore = FAISS.from_documents(documents=splits, embedding=embeddings)
             st.success("Vector store created successfully")
             return vectorstore.as_retriever()
@@ -70,113 +61,96 @@ def create_embeddings(documents):
             st.error(f"Error creating embeddings: {str(e)}")
             return None
 
+# Create the QA chain
 def create_question_answering_chain(llm):
-    system_prompt = (
-        "You are a precise question-answering assistant. "
-        "Answer the user's question using only the context provided from the scraped URL content and the chat history. "
-        "Do not use external knowledge beyond what is retrieved. "
-        "Keep your answer concise, limited to three sentences maximum, and say 'I don’t know' if the context lacks the answer.\n\n{context}"
-    )
     qa_prompt = ChatPromptTemplate.from_messages([
-        ("system", system_prompt),
+        ("system", "You are a precise question-answering assistant. Answer the user's question using only the context provided. Say 'I don't know' if unsure.\n\n{context}"),
         MessagesPlaceholder(variable_name="chat_history"),
-        ("human", "{input}"),
+        ("human", "{input}")
     ])
     return create_stuff_documents_chain(llm, qa_prompt)
 
-def initialize_rag_system(groq_api_key, groq_model, temperature, max_tokens):
+# Initialize RAG system
+def initialize_rag_system(groq_api_key, model, temperature, max_tokens):
     try:
-        if not st.session_state.retriever:
-            st.error("Retriever not available. Make sure documents were embedded properly.")
-            return None
-
-        llm = ChatGroq(
-            api_key=groq_api_key,
-            model=groq_model,
-            temperature=temperature,
-            max_tokens=max_tokens
-        )
-        st.sidebar.success(f"Using Groq LLM: {groq_model}")
-
-        contextualize_q_system_prompt = (
-            "You are a precise question-answering assistant. "
-            "Rephrase the user's question to incorporate context from the scraped URL content and chat history, "
-            "ensuring it relies only on this information and not external knowledge. "
-            "Keep the rephrased question clear and concise.\n\nQuestion: {input}"
-        )
+        llm = ChatGroq(api_key=groq_api_key, model=model, temperature=temperature, max_tokens=max_tokens)
         contextualize_q_prompt = ChatPromptTemplate.from_messages([
-            ("system", contextualize_q_system_prompt),
+            ("system", "Rephrase the user's question using only chat history and URL content."),
             MessagesPlaceholder(variable_name="chat_history"),
             ("human", "{input}")
         ])
-
-        history_aware_retriever = create_history_aware_retriever(
-            llm, st.session_state.retriever, contextualize_q_prompt
-        )
+        history_aware_retriever = create_history_aware_retriever(llm, st.session_state.retriever, contextualize_q_prompt)
         question_answer_chain = create_question_answering_chain(llm)
         return create_retrieval_chain(history_aware_retriever, question_answer_chain)
     except Exception as e:
         st.error(f"Error initializing RAG system: {str(e)}")
         return None
 
+# Main app
 def main():
     st.set_page_config(page_title="WebPage Query", layout="wide")
     initialize_session_state()
 
+    st.title("🔍 Web RAG Assistant")
     st.write(f"Streamlit version: {st.__version__}")
-    groq_api_key = DEFAULT_GROQ_API_KEY
-    groq_model = "llama3-70b-8192"
-    max_tokens = 1024
 
+    # Sidebar config
     with st.sidebar:
-        st.sidebar.header("Configuration")
-        temperature = st.slider(
-            "Temperature",
-            min_value=0.0,
-            max_value=1.0,
-            value=0.5,
-            step=0.1,
-            key="temperature_slider_unique"
-        )
+        st.header("Configuration")
+        temperature = st.slider("Temperature", 0.0, 1.0, 0.5, step=0.1)
+        max_tokens = 1024
 
+        # Debug info
+        st.write("🔍 Debug Info")
+        st.write("Retriever Initialized:", st.session_state.retriever is not None)
+        st.write("RAG Chain Initialized:", st.session_state.rag_chain is not None)
+
+    # URL loader
     st.header("Load Content")
     url_col1, url_col2 = st.columns([3, 1])
     with url_col1:
-        url = st.text_input("Enter a URL to load content from:", key="url_input_unique")
+        url = st.text_input("Enter a URL to load content from:")
     with url_col2:
-        load_button = st.button("Load Content", key="load_content_button_unique")
+        load_button = st.button("Load Content")
 
     if load_button and url:
-        if not url.startswith(('http://', 'https://')):
-            url = 'https://' + url
+        if not url.startswith(("http://", "https://")):
+            url = "https://" + url
         documents = load_content(url)
         if documents:
             st.session_state.loaded_url = url
             st.session_state.retriever = create_embeddings(documents)
+            st.write("✅ Retriever created:", st.session_state.retriever is not None)
             if st.session_state.retriever:
                 st.session_state.rag_chain = initialize_rag_system(
-                    groq_api_key, groq_model, temperature, max_tokens
+                    DEFAULT_GROQ_API_KEY,
+                    GROQ_MODEL,
+                    temperature,
+                    max_tokens
                 )
+                st.write("✅ RAG chain created:", st.session_state.rag_chain is not None)
                 if st.session_state.rag_chain:
                     st.success("RAG system initialized and ready!")
 
     if st.session_state.loaded_url:
         st.info(f"Currently using content from: {st.session_state.loaded_url}")
 
+    # Chat section
     st.header("Chat")
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.write(message["content"])
 
-    if user_input := st.chat_input("Ask a question about the loaded content...", key="chat_input_unique"):
-        if not st.session_state.rag_chain:
-            st.error("RAG system not initialized. Please load content first.")
+    if user_input := st.chat_input("Ask a question about the loaded content..."):
+        if not st.session_state.loaded_url:
+            st.error("Please load a URL first.")
+        elif not st.session_state.rag_chain:
+            st.error("RAG system not initialized. Please try reloading the content.")
         else:
             st.session_state.messages.append({"role": "user", "content": user_input})
             with st.chat_message("user"):
                 st.write(user_input)
-            user_message = HumanMessage(content=user_input)
-            st.session_state.chat_history.add_message(user_message)
+            st.session_state.chat_history.add_message(HumanMessage(content=user_input))
 
             with st.chat_message("assistant"):
                 with st.spinner("Thinking..."):
@@ -187,13 +161,13 @@ def main():
                         })
                         response = result.get('answer') or result.get('output') or next(iter(result.values()), "I don't know.")
                         st.write(response)
-                        bot_message = AIMessage(content=response)
-                        st.session_state.chat_history.add_message(bot_message)
+                        st.session_state.chat_history.add_message(AIMessage(content=response))
                         st.session_state.messages.append({"role": "assistant", "content": response})
                     except Exception as e:
                         st.error(f"Error processing question: {str(e)}")
 
-    if st.button("Clear Chat", key="clear_chat_button_unique"):
+    # Clear chat
+    if st.button("Clear Chat"):
         st.session_state.messages = []
         st.session_state.chat_history = ChatMessageHistory()
         st.success("Chat history cleared!")
