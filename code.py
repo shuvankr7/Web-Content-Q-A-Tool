@@ -11,7 +11,7 @@ from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_community.vectorstores import FAISS
 from sentence_transformers import SentenceTransformer
-from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 
 # Set environment variables before imports
 os.environ["USER_AGENT"] = "RAG-Chat-Assistant/1.0"
