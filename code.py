@@ -10,6 +10,8 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_community.vectorstores import FAISS
+from sentence_transformers import SentenceTransformer
+from langchain.embeddings import HuggingFaceEmbeddings
 
 # Set environment variables before imports
 os.environ["USER_AGENT"] = "RAG-Chat-Assistant/1.0"
@@ -51,11 +53,9 @@ def create_embeddings(documents):
             # Explicitly import torch to ensure it’s fully loaded
             import torch
             # Use a lightweight model and CPU-only to avoid GPU-related issues
-            embeddings = HuggingFaceEmbeddings(
-                model_name="all-MiniLM-L6-v2",
-                model_kwargs={"device": "cpu"},  # Force CPU usage
-                show_progress=False
-            )
+            sentence_model = SentenceTransformer("all-MiniLM-L6-v2")
+            embeddings = HuggingFaceEmbeddings(model=sentence_model)
+
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=5000, chunk_overlap=500)
             splits = text_splitter.split_documents(documents)
             vectorstore = FAISS.from_documents(documents=splits, embedding=embeddings)
